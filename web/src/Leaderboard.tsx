@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { calculateScore } from '../utils/scoring';
 import { Prediction, RedditPost } from '../types';
 
@@ -8,116 +8,137 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ predictions, topPost }) => {
-  // Calculate scores for all predictions
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   const scoredPredictions = predictions
     .map(prediction => ({
       ...prediction,
       score: topPost ? calculateScore(prediction, topPost) : 0
     }))
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+  if (predictions.length === 0) {
+    return (
+      <div style={{
+        marginTop: '20px',
+        padding: '30px',
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: '12px',
+        textAlign: 'center',
+        color: '#888'
+      }}>
+        <p style={{ fontSize: '1.2em' }}>📊</p>
+        <p>No predictions yet. Be the first!</p>
+      </div>
+    );
+  }
+
+  const getRankIcon = (index: number) => {
+    if (index === 0) return '🥇';
+    if (index === 1) return '🥈';
+    if (index === 2) return '🥉';
+    return `${index + 1}.`;
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#7ee787'; // Green
+    if (score >= 40) return '#ffa726'; // Orange
+    return '#ff5252'; // Red
+  };
 
   return (
-    <div style={{ marginTop: '30px' }}>
-      <h2 style={{ marginBottom: '15px' }}>Leaderboard</h2>
-      
-      {scoredPredictions.length === 0 ? (
-        <div style={{ 
-          padding: '15px', 
-          backgroundColor: '#e9ecef',
-          borderRadius: '4px',
-          textAlign: 'center'
+    <div style={{
+      marginTop: '20px',
+      padding: '20px',
+      backgroundColor: 'rgba(255,255,255,0.05)',
+      borderRadius: '12px',
+      border: '1px solid rgba(255,255,255,0.1)'
+    }}>
+      <h2 style={{ marginBottom: '20px', color: '#ff4500', textAlign: 'center' }}>
+        🏆 Leaderboard
+      </h2>
+
+      {scoredPredictions.map((prediction, index) => (
+        <div key={prediction.id} style={{
+          marginBottom: '10px',
+          padding: '15px',
+          backgroundColor: 'rgba(0,0,0,0.2)',
+          borderRadius: '10px',
+          border: `2px solid ${index < 3 ? 'rgba(255,215,0,0.3)' : 'transparent'}`,
         }}>
-          <p style={{ margin: '0' }}>No predictions yet. Be the first to make a prediction!</p>
-        </div>
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f5f5f5' }}>
-              <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Rank</th>
-              <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>User</th>
-              <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left' }}>Prediction</th>
-              <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right' }}>Score</th>
-              <th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scoredPredictions.map((prediction, index) => {
-              const exactSubreddit = topPost && prediction.subreddit.toLowerCase() === topPost.subreddit.toLowerCase();
-              const exactTitle = topPost && prediction.title.toLowerCase() === topPost.title.toLowerCase();
-              
-              return (
-                <tr 
-                  key={prediction.id} 
-                  style={{ 
-                    backgroundColor: index === 0 ? '#fff3cd' : 'inherit',
-                    fontWeight: index === 0 ? 'bold' : 'normal'
-                  }}
-                >
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{index + 1}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{prediction.user}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{prediction.title}</td>
-                  <td style={{ 
-                    border: '1px solid #ddd', 
-                    padding: '8px',
-                    fontWeight: index === 0 ? 'bold' : 'normal',
-                    textAlign: 'right'
-                  }}>
-                    {prediction.score}
-                  </td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                    <details style={{ fontSize: '0.9em' }}>
-                      <summary style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: '4px', backgroundColor: '#f8f9fa' }}>View Details</summary>
-                      <div style={{ marginTop: '10px', paddingLeft: '10px', borderLeft: '2px solid #ddd' }}>
-                        <p style={{ margin: '5px 0' }}><strong>Subreddit:</strong> {prediction.subreddit}</p>
-                        <p style={{ margin: '5px 0' }}><strong>Reasoning:</strong> {prediction.reason}</p>
-                        <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                          <span style={{ color: exactSubreddit ? '#28a745' : '#6c757d' }}>
-                            {exactSubreddit ? '✅' : '❌'} Subreddit Match
-                          </span>
-                          <span style={{ color: exactTitle ? '#28a745' : '#6c757d' }}>
-                            {exactTitle ? '✅' : '❌'} Title Match
-                          </span>
-                        </div>
-                      </div>
-                    </details>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
-      
-      {topPost && (
-        <div style={{ 
-          marginTop: '20px', 
-          padding: '15px', 
-          backgroundColor: '#e9f7ef', 
-          borderRadius: '8px',
-          border: '1px solid #d4edda'
-        }}>
-          <h3 style={{ marginTop: '0' }}>Final Results</h3>
-          <p style={{ margin: '5px 0' }}>Actual Top Post: r/{topPost.subreddit} - {topPost.title}</p>
-          <p style={{ margin: '5px 0' }}>Post Score: {topPost.score.toLocaleString()}</p>
-          <a 
-            href={topPost.url} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            style={{ 
-              display: 'inline-block', 
-              marginTop: '10px',
-              padding: '6px 12px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              fontSize: '0.9em'
+          <div 
+            onClick={() => setExpandedId(expandedId === prediction.id ? null : prediction.id)}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'pointer'
             }}
           >
-            View Winning Post
-          </a>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '1.5em' }}>{getRankIcon(index)}</span>
+              <div>
+                <div style={{ fontWeight: 'bold', color: '#fff' }}>
+                  {prediction.user}
+                </div>
+                <div style={{ fontSize: '0.85em', color: '#aaa' }}>
+                  r/{prediction.subreddit}
+                </div>
+              </div>
+            </div>
+            <div style={{
+              fontSize: '1.3em',
+              fontWeight: 'bold',
+              color: getScoreColor(prediction.score || 0)
+            }}>
+              {prediction.score} pts
+            </div>
+          </div>
+
+          {expandedId === prediction.id && (
+            <div style={{
+              marginTop: '15px',
+              paddingTop: '15px',
+              borderTop: '1px solid rgba(255,255,255,0.1)',
+              color: '#ccc'
+            }}>
+              <p style={{ marginBottom: '10px' }}>
+                <strong style={{ color: '#ff9800' }}>"{prediction.title}"</strong>
+              </p>
+              <p style={{ fontSize: '0.9em', fontStyle: 'italic', marginBottom: '10px' }}>
+                💭 "{prediction.reason}"
+              </p>
+              {topPost && (
+                <div style={{
+                  marginTop: '10px',
+                  padding: '10px',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  borderRadius: '8px',
+                  fontSize: '0.85em'
+                }}>
+                  <p>✅ Predicted: <strong>r/{prediction.subreddit}</strong></p>
+                  {topPost.subreddit.toLowerCase() === prediction.subreddit.toLowerCase() ? (
+                    <p style={{ color: '#7ee787' }}>🎯 Correct subreddit! +{prediction.score} points</p>
+                  ) : (
+                    <p style={{ color: '#ff5252' }}>
+                      ❌ Was r/{topPost.subreddit}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      ))}
+
+      <div style={{ 
+        marginTop: '15px', 
+        textAlign: 'center',
+        fontSize: '0.8em',
+        color: '#666'
+      }}>
+        Click any entry to see details
+      </div>
     </div>
   );
 };

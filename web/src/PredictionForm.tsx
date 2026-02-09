@@ -14,11 +14,11 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit, onUserChange,
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof Prediction, string>> = {};
-    if (!formData.user.trim()) newErrors.user = 'Username is required';
-    if (!formData.subreddit.trim()) newErrors.subreddit = 'Subreddit is required';
-    else if (!/^\w+$/.test(formData.subreddit)) newErrors.subreddit = 'Invalid format (no slashes/spaces)';
-    if (!formData.title.trim()) newErrors.title = 'Post title is required';
-    if (!formData.reason.trim()) newErrors.reason = 'Reasoning is required';
+    if (!formData.user.trim()) newErrors.user = 'Username required';
+    if (!formData.subreddit.trim()) newErrors.subreddit = 'Subreddit required';
+    else if (!/^\w+$/.test(formData.subreddit)) newErrors.subreddit = 'Invalid format';
+    if (!formData.title.trim()) newErrors.title = 'Title required';
+    if (!formData.reason.trim()) newErrors.reason = 'Reasoning required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -30,6 +30,7 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit, onUserChange,
       setSubmitted(true);
       setFormData({ user: '', subreddit: '', title: '', reason: '' });
       setErrors({});
+      setTimeout(() => setSubmitted(false), 3000);
     }
   };
 
@@ -38,42 +39,137 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit, onUserChange,
     if (onUserChange) onUserChange(e.target.value);
   };
 
+  const inputStyle = (error?: string): React.CSSProperties => ({
+    width: '100%',
+    padding: '12px',
+    marginTop: '6px',
+    backgroundColor: disabled ? '#333' : '#2a2a3e',
+    border: `2px solid ${error ? '#ff4444' : '#444'}`,
+    borderRadius: '8px',
+    color: '#fff',
+    fontSize: '1em',
+    transition: 'border-color 0.2s',
+  });
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    marginBottom: '15px',
+    color: '#ddd',
+    fontSize: '0.95em',
+  };
+
+  const errorStyle: React.CSSProperties = {
+    color: '#ff4444',
+    fontSize: '0.85em',
+    marginTop: '4px',
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '14px',
+    backgroundColor: disabled ? '#666' : '#ff4500',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '1.1em',
+    fontWeight: '600',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    marginTop: '10px',
+  };
+
   return (
-    <div style={{ margin: '20px 0', padding: '15px', border: '1px solid #ccc', borderRadius: '8px' }}>
-      <h2 style={{ marginBottom: '15px' }}>Make Your Prediction</h2>
+    <div style={{ 
+      marginBottom: '20px', 
+      padding: '20px', 
+      backgroundColor: 'rgba(255,255,255,0.05)', 
+      borderRadius: '12px',
+      border: '1px solid rgba(255,255,255,0.1)'
+    }}>
+      <h2 style={{ marginBottom: '20px', color: '#ff4500', textAlign: 'center' }}>
+        🎯 Make Your Prediction
+      </h2>
+      
       {submitted && (
-        <div style={{ padding: '10px', backgroundColor: '#d4edda', color: '#155724', borderRadius: '4px', marginBottom: '15px' }}>
-          Prediction submitted!
-          <button onClick={() => setSubmitted(false)} style={{ marginLeft: '10px', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
+        <div style={{ 
+          padding: '15px', 
+          backgroundColor: '#2d5016', 
+          color: '#7ee787',
+          borderRadius: '8px', 
+          marginBottom: '15px',
+          textAlign: 'center'
+        }}>
+          ✅ Prediction submitted!
         </div>
       )}
+
+      {disabled && (
+        <div style={{ 
+          padding: '15px', 
+          backgroundColor: '#4a1c1c', 
+          color: '#ff9999',
+          borderRadius: '8px', 
+          marginBottom: '15px',
+          textAlign: 'center'
+        }}>
+          🔒 Predictions are currently closed. Come back tomorrow!
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Username:</label>
-          <input type="text" value={formData.user} onChange={handleUserChange} disabled={disabled}
-            style={{ width: '100%', padding: '8px', marginTop: '4px', border: errors.user ? '1px solid #dc3545' : '1px solid #ccc', borderRadius: '4px' }} />
-          {errors.user && <div style={{ color: '#dc3545', fontSize: '0.9em', marginTop: '4px' }}>{errors.user}</div>}
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Predicted Subreddit (without /r/):</label>
-          <input type="text" value={formData.subreddit} onChange={(e) => setFormData({ ...formData, subreddit: e.target.value })} disabled={disabled}
-            style={{ width: '100%', padding: '8px', marginTop: '4px', border: errors.subreddit ? '1px solid #dc3545' : '1px solid #ccc', borderRadius: '4px' }} />
-          {errors.subreddit && <div style={{ color: '#dc3545', fontSize: '0.9em', marginTop: '4px' }}>{errors.subreddit}</div>}
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Predicted Post Title:</label>
-          <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} disabled={disabled}
-            style={{ width: '100%', padding: '8px', marginTop: '4px', border: errors.title ? '1px solid #dc3545' : '1px solid #ccc', borderRadius: '4px' }} />
-          {errors.title && <div style={{ color: '#dc3545', fontSize: '0.9em', marginTop: '4px' }}>{errors.title}</div>}
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Reasoning:</label>
-          <textarea value={formData.reason} onChange={(e) => setFormData({ ...formData, reason: e.target.value })} disabled={disabled} rows={4}
-            style={{ width: '100%', padding: '8px', marginTop: '4px', border: errors.reason ? '1px solid #dc3545' : '1px solid #ccc', borderRadius: '4px' }} />
-          {errors.reason && <div style={{ color: '#dc3545', fontSize: '0.9em', marginTop: '4px' }}>{errors.reason}</div>}
-        </div>
-        <button type="submit" disabled={disabled} style={{ padding: '10px 20px', backgroundColor: disabled ? '#6c757d' : '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: disabled ? 'not-allowed' : 'pointer' }}>
-          Submit Prediction
+        <label style={labelStyle}>
+          👤 Username
+          <input 
+            type="text" 
+            value={formData.user} 
+            onChange={handleUserChange} 
+            disabled={disabled}
+            placeholder="Enter your username"
+            style={inputStyle(errors.user)}
+          />
+          {errors.user && <div style={errorStyle}>{errors.user}</div>}
+        </label>
+
+        <label style={labelStyle}>
+          📁 Predicted Subreddit (without r/)
+          <input 
+            type="text" 
+            value={formData.subreddit} 
+            onChange={(e) => setFormData({ ...formData, subreddit: e.target.value })} 
+            disabled={disabled}
+            placeholder="e.g., memes, funny, askreddit"
+            style={inputStyle(errors.subreddit)}
+          />
+          {errors.subreddit && <div style={errorStyle}>{errors.subreddit}</div>}
+        </label>
+
+        <label style={labelStyle}>
+          📝 Predicted Post Title
+          <input 
+            type="text" 
+            value={formData.title} 
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
+            disabled={disabled}
+            placeholder="What will the title say?"
+            style={inputStyle(errors.title)}
+          />
+          {errors.title && <div style={errorStyle}>{errors.title}</div>}
+        </label>
+
+        <label style={labelStyle}>
+          💭 Your Reasoning
+          <textarea 
+            value={formData.reason} 
+            onChange={(e) => setFormData({ ...formData, reason: e.target.value })} 
+            disabled={disabled}
+            placeholder="Why do you think this will be #1?"
+            rows={4}
+            style={{ ...inputStyle(errors.reason), resize: 'vertical', minHeight: '100px' }}
+          />
+          {errors.reason && <div style={errorStyle}>{errors.reason}</div>}
+        </label>
+
+        <button type="submit" disabled={disabled} style={buttonStyle}>
+          {disabled ? '⏸️ Predictions Closed' : '🚀 Submit Prediction'}
         </button>
       </form>
     </div>
