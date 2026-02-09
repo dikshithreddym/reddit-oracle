@@ -1,6 +1,6 @@
 {
   "name": "oracle-predictor",
-  "version": "1.0.0",
+  "version": "0.0.5",
   "scripts": {
     "build-web": "cd web && npm run build",
     "playtest": "devvit playtest",
@@ -10,6 +10,7 @@
     "@devvit/public-api": "^0.12.0"
   },
   "devDependencies": {
+    "@devvit/cli": "^0.12.12",
     "@devvit/tsconfig": "^0.12.0",
     "typescript": "^5.0.0"
   },

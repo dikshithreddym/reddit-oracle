@@ -1,0 +1,3 @@
+Reddit Oracle v0.0.5 successfully uploaded to Devvit. App available at: https://developers.reddit.com/apps/oracle-predictor
+
+Note: Screenshot capture requires manual verification in browser due to headless environment. Please verify app appearance at the link above.
