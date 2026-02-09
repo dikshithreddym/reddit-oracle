@@ -1,13 +1,20 @@
-import React from 'react';
-import { render } from 'devvit';
-import Game from './components/Game';
+import { Devvit, useWebView } from '@devvit/public-api';
 
-// Entry point for Devvit Interactive Post
-export default function App() {
-  return (
-    <Game />
-  );
-}
+Devvit.addCustomPostType({
+  name: 'Reddit Oracle',
+  description: "Predict today's #1 post on r/popular",
+  render: () => {
+    const { mount } = useWebView({
+      url: 'index.html',
+      onMessage: (msg) => {
+        console.log('Message from webview:', msg);
+      },
+    });
 
-// Render the app
-render(<App />);
+    return (
+      <button onPress={mount}>Open Reddit Oracle</button>
+    );
+  },
+});
+
+export default Devvit;

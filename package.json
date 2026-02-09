@@ -2,20 +2,21 @@
   "name": "reddit-oracle",
   "version": "1.0.0",
   "scripts": {
-    "build": "webpack --mode production",
-    "dev": "webpack --mode development",
-    "test": "devvit playtest"
+    "build": "devvit build",
+    "dev": "devvit build --watch",
+    "playtest": "devvit playtest"
   },
   "dependencies": {
-    "react": "^18.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
     "@devvit/public-api": "^0.12.0",
     "@devvit/runtime-lite": "^0.12.0",
     "@devvit/tsconfig": "^0.12.0",
-    "typescript": "^5.0.0",
-    "webpack": "^5.0.0",
-    "ts-loader": "^9.0.0"
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0"
   },
   "devvit": {
     "entryPoint": "src/main.tsx"

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Prediction } from '../types';
 
 interface PredictionFormProps {
-  onSubmit: (prediction: Omit<Prediction, 'id' | 'timestamp'>) => void;
+  onSubmit: (prediction: { user: string; subreddit: string; title: string; reason: string }) => void;
   onUserChange?: (user: string) => void;
   disabled?: boolean;
 }

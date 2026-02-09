@@ -28,7 +28,7 @@ const Game: React.FC = () => {
         setTopPost(data);
         setError(null);
       } catch (err) {
-        setError('Failed to load today's top post. Using mock data for demonstration.');
+        setError("Failed to load today's top post. Using mock data for demonstration.");
         console.error('Failed to fetch Reddit data:', err);
       } finally {
         setLoading(false);
@@ -56,7 +56,7 @@ const Game: React.FC = () => {
     return () => clearInterval(timerId);
   }, []);
 
-  const handleSubmitPrediction = (prediction: Omit<Prediction, 'id' | 'timestamp'>) => {
+  const handleSubmitPrediction = (prediction: { user: string; subreddit: string; title: string; reason: string }) => {
     if (!user.trim()) {
       setError('Please enter a username before submitting a prediction.');
       return;

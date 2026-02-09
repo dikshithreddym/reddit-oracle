@@ -1,6 +1,6 @@
 import React from 'react';
-import { calculateScore } from '../../utils/scoring';
-import { Prediction, RedditPost } from '../../types';
+import { calculateScore } from '../utils/scoring';
+import { Prediction, RedditPost } from '../types';
 
 interface LeaderboardProps {
   predictions: Prediction[];
