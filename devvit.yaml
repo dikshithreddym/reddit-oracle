@@ -1,7 +1,4 @@
-name: reddit-oracle
+name: oracle-predictor
 version: 1.0.0
-dependencies:
-  devvit: ^0.1.0
-  react: ^18.0.0
-  "@reddit/devvit": ^0.1.0
-entryPoint: src/main.tsx
+types:
+  - web
