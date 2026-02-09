@@ -1,0 +1,18 @@
+{
+  "name": "reddit-oracle",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "devvit": "^0.1.0",
+    "@reddit/devvit": "^0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "webpack": "^5.0.0",
+    "ts-loader": "^9.0.0"
+  }
+}
