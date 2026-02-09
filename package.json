@@ -1,21 +1,16 @@
 {
-  "name": "reddit-oracle",
+  "name": "oracle-predictor",
   "version": "1.0.0",
   "scripts": {
-    "build": "devvit build",
-    "dev": "devvit build --watch",
-    "playtest": "devvit playtest"
+    "build-web": "cd web && npm run build",
+    "playtest": "devvit playtest",
+    "upload": "devvit upload"
   },
   "dependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "@devvit/public-api": "^0.12.0"
   },
   "devDependencies": {
-    "@devvit/public-api": "^0.12.0",
-    "@devvit/runtime-lite": "^0.12.0",
     "@devvit/tsconfig": "^0.12.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
     "typescript": "^5.0.0"
   },
   "devvit": {

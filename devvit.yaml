@@ -1,4 +1,14 @@
 name: oracle-predictor
 version: 1.0.0
-types:
-  - web
+description: "Daily prediction game for Reddit's top post"
+license: MIT
+
+# Use webview for web content
+webview:
+  entry: web/build/index.html
+  
+# Define the custom post type
+customPostTypes:
+  - name: Reddit Oracle
+    description: "Predict today's #1 post on r/popular"
+    height: tall
