@@ -3,16 +3,18 @@ import { Devvit, useWebView } from '@devvit/public-api';
 Devvit.addCustomPostType({
   name: 'Reddit Oracle',
   description: "Predict today's #1 post on r/popular",
+  height: 'tall',
   render: () => {
-    const { mount } = useWebView({
+    const webview = useWebView({
       url: 'index.html',
-      onMessage: (msg) => {
-        console.log('Message from webview:', msg);
-      },
     });
 
     return (
-      <button onPress={mount}>Open Reddit Oracle</button>
+      <vstack padding="medium" gap="medium">
+        <text size="xlarge" weight="bold">Reddit Oracle</text>
+        <text size="medium">Predict today's #1 post on r/popular</text>
+        <button onPress={webview.mount}>Open Game</button>
+      </vstack>
     );
   },
 });
