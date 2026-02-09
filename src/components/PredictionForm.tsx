@@ -1,29 +1,25 @@
 import React, { useState } from 'react';
-
-interface PredictionFormData {
-  user: string;
-  subreddit: string;
-  title: string;
-  reason: string;
-}
+import { Prediction } from '../types';
 
 interface PredictionFormProps {
-  onSubmit: (prediction: Omit<PredictionFormData, 'user'>) => void;
+  onSubmit: (prediction: Omit<Prediction, 'id' | 'timestamp'>) => void;
+  onUserChange?: (user: string) => void;
+  disabled?: boolean;
 }
 
-const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit }) => {
-  const [formData, setFormData] = useState<PredictionFormData>({
+const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit, onUserChange, disabled = false }) => {
+  const [formData, setFormData] = useState({
     user: '',
     subreddit: '',
     title: '',
     reason: ''
   });
   
-  const [errors, setErrors] = useState<Partial<Record<keyof PredictionFormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof Prediction, string>>>({});
   const [submitted, setSubmitted] = useState(false);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof PredictionFormData, string>> = {};
+    const newErrors: Partial<Record<keyof Prediction, string>> = {};
     
     if (!formData.user.trim()) {
       newErrors.user = 'Username is required';
@@ -63,12 +59,24 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit }) => {
         title: '',
         reason: ''
       });
+      
+      // Reset validation
+      setErrors({});
+    }
+  };
+
+  // Update user state when username changes
+  const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUser = e.target.value;
+    setFormData({ ...formData, user: newUser });
+    if (onUserChange) {
+      onUserChange(newUser);
     }
   };
 
   return (
-    <div style={{ margin: '20px 0' }}>
-      <h2>Make Your Prediction</h2>
+    <div style={{ margin: '20px 0', padding: '15px', border: '1px solid #ccc', borderRadius: '8px' }}>
+      <h2 style={{ marginBottom: '15px' }}>Make Your Prediction</h2>
       
       {submitted && (
         <div style={{ 
@@ -80,6 +88,19 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit }) => {
           marginBottom: '15px'
         }}>
           Prediction submitted successfully!
+          <button 
+            onClick={() => setSubmitted(false)}
+            style={{
+              marginLeft: '10px',
+              padding: '3px 8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: '#155724',
+              cursor: 'pointer'
+            }}
+          >
+            ×
+          </button>
         </div>
       )}
       
@@ -90,12 +111,20 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit }) => {
             <input
               type="text"
               value={formData.user}
-              onChange={(e) => setFormData({ ...formData, user: e.target.value })}
-              style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+              onChange={handleUserChange}
+              disabled={disabled}
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '4px',
+                backgroundColor: disabled ? '#e9ecef' : 'white',
+                border: errors.user ? '1px solid #dc3545' : '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
           </label>
           {errors.user && (
-            <div style={{ color: 'red', fontSize: '0.9em' }}>{errors.user}</div>
+            <div style={{ color: '#dc3545', fontSize: '0.9em', marginTop: '4px' }}>{errors.user}</div>
           )}
         </div>
         
@@ -106,11 +135,19 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit }) => {
               type="text"
               value={formData.subreddit}
               onChange={(e) => setFormData({ ...formData, subreddit: e.target.value })}
-              style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+              disabled={disabled}
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '4px',
+                backgroundColor: disabled ? '#e9ecef' : 'white',
+                border: errors.subreddit ? '1px solid #dc3545' : '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
           </label>
           {errors.subreddit && (
-            <div style={{ color: 'red', fontSize: '0.9em' }}>{errors.subreddit}</div>
+            <div style={{ color: '#dc3545', fontSize: '0.9em', marginTop: '4px' }}>{errors.subreddit}</div>
           )}
         </div>
         
@@ -121,11 +158,19 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit }) => {
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+              disabled={disabled}
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '4px',
+                backgroundColor: disabled ? '#e9ecef' : 'white',
+                border: errors.title ? '1px solid #dc3545' : '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
           </label>
           {errors.title && (
-            <div style={{ color: 'red', fontSize: '0.9em' }}>{errors.title}</div>
+            <div style={{ color: '#dc3545', fontSize: '0.9em', marginTop: '4px' }}>{errors.title}</div>
           )}
         </div>
         
@@ -135,23 +180,34 @@ const PredictionForm: React.FC<PredictionFormProps> = ({ onSubmit }) => {
             <textarea
               value={formData.reason}
               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              style={{ width: '100%', padding: '8px', marginTop: '4px', minHeight: '100px' }}
+              disabled={disabled}
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '4px', 
+                minHeight: '100px',
+                backgroundColor: disabled ? '#e9ecef' : 'white',
+                border: errors.reason ? '1px solid #dc3545' : '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
           </label>
           {errors.reason && (
-            <div style={{ color: 'red', fontSize: '0.9em' }}>{errors.reason}</div>
+            <div style={{ color: '#dc3545', fontSize: '0.9em', marginTop: '4px' }}>{errors.reason}</div>
           )}
         </div>
         
         <button
           type="submit"
+          disabled={disabled}
           style={{
             padding: '10px 20px',
-            backgroundColor: '#007bff',
+            backgroundColor: disabled ? '#6c757d' : '#007bff',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: 'pointer'
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            fontSize: '1em'
           }}
         >
           Submit Prediction

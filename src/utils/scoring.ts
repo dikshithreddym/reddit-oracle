@@ -1,4 +1,4 @@
-import { Prediction } from '../types';
+import { Prediction, RedditPost, ScoreBreakdown } from '../types';
 
 // Base points for different prediction accuracy levels
 const SCORES = {
@@ -13,45 +13,90 @@ const SCORES = {
 // Thresholds for partial matches
 const PARTIAL_MATCH_THRESHOLD = 0.6; // 60% similarity for partial match
 
+// Category mappings for subreddit matching
+const subredditCategories: Record<string, string[]> = {
+  gaming: ['gaming', 'playstation', 'xbox', 'nintendo', 'pcgaming'],
+  memes: ['memes', 'dankmemes', 'funny', 'meirl', 'memesoftheyear'],
+  news: ['news', 'worldnews', 'technology', 'politics', 'science'],
+  science: ['science', 'space', 'physics', 'math', 'technology'],
+  sports: ['sports', 'nba', 'soccer', 'baseball', 'hockey'],
+  animals: ['aww', 'cats', 'dogs', 'animals', 'nature'],
+  entertainment: ['movies', 'tvshows', 'celebrities', 'music', 'books'],
+  lifestyle: ['lifehacks', 'food', 'travel', 'fashion', 'fitness']
+};
+
 /**
- * Calculate similarity between two strings using Levenshtein distance
+ * Calculate similarity between two strings using a custom algorithm
  * @param s1 First string
  * @param s2 Second string
  * @returns Similarity score between 0 and 1
  */
 function similarity(s1: string, s2: string): number {
-  const longer = s1.length > s2.length ? s1 : s2;
-  const shorter = s1.length > s2.length ? s2 : s1;
+  const str1 = s1.toLowerCase().trim();
+  const str2 = s2.toLowerCase().trim();
   
-  if (longer.length === 0) return 1.0;
-  if (shorter.length === 0) return 0.0;
+  if (str1 === str2) return 1.0;
+  if (str1.length < 2 || str2.length < 2) return 0.0;
   
-  const ratio = longer.length / shorter.length;
-  if (ratio > 2) return 0.0; // If one string is more than twice as long as the other
-  
-  // Simple case-insensitive comparison
-  const lower1 = longer.toLowerCase();
-  const lower2 = shorter.toLowerCase();
-  
-  if (lower1.includes(lower2) || lower2.includes(lower1)) {
+  // Simple case: exact partial match
+  if (str1.includes(str2) || str2.includes(str1)) {
     return 0.7; // Partial inclusion gets a decent score
   }
   
-  // For now, return a basic similarity (in a real app, implement Levenshtein)
-  return 0.5;
+  // Calculate character pair similarity (Sørensen–Dice coefficient)
+  const pairs1 = new Set<string>();
+  const pairs2 = new Set<string>();
+  
+  for (let i = 0; i < str1.length - 1; i++) {
+    pairs1.add(str1.substring(i, i + 2));
+  }
+  
+  for (let i = 0; i < str2.length - 1; i++) {
+    pairs2.add(str2.substring(i, i + 2));
+  }
+  
+  const intersection = [...pairs1].filter(pair => pairs2.has(pair)).length;
+  const union = pairs1.size + pairs2.size;
+  
+  return union === 0 ? 0 : (2 * intersection) / union;
+}
+
+/**
+ * Find matching category for a subreddit
+ * @param subreddit Subreddit name to check
+ * @returns Category name if found, null otherwise
+ */
+function findCategory(subreddit: string): string | null {
+  const lowerSubreddit = subreddit.toLowerCase();
+  
+  for (const [category, subreddits] of Object.entries(subredditCategories)) {
+    if (subreddits.includes(lowerSubreddit)) {
+      return category;
+    }
+  }
+  
+  return null;
 }
 
 /**
  * Calculate score for a prediction based on accuracy
  * @param prediction User's prediction
  * @param actualPost Actual top post data
+ * @param streakBonus Multiplier for streak (optional)
  * @returns Score in points
  */
-export function calculateScore(prediction: Prediction, actualPost: any): number {
+export function calculateScore(prediction: Prediction, actualPost: RedditPost, streakBonus: number = 1): number {
   let score = 0;
+  const breakdown: Partial<ScoreBreakdown> = {
+    participation: SCORES.PARTICIPATION,
+    subreddit: 0,
+    title: 0,
+    streakBonus: 0,
+    total: 0
+  };
   
   // Participation points
-  score += SCORES.PARTICIPATION;
+  score += breakdown.participation || 0;
   
   // Subreddit matching
   const predictedSubreddit = prediction.subreddit.toLowerCase().trim();
@@ -59,31 +104,23 @@ export function calculateScore(prediction: Prediction, actualPost: any): number 
   
   if (predictedSubreddit === actualSubreddit) {
     // Exact subreddit match
-    score += SCORES.EXACT_SUBREDDIT;
+    breakdown.subreddit = SCORES.EXACT_SUBREDDIT;
+    score += breakdown.subreddit;
   } else {
-    // Check for category match (e.g., both are gaming, memes, etc.)
-    const subredditCategories = {
-      gaming: ['gaming', 'playstation', 'xbox', 'nintendo'],
-      memes: ['memes', 'dankmemes', 'funny'],
-      news: ['news', 'worldnews', 'technology'],
-      science: ['science', 'space', 'physics'],
-      sports: ['sports', 'nba', 'soccer'],
-      // Add more categories as needed
-    };
+    // Check for category match
+    const predictedCategory = findCategory(predictedSubreddit);
+    const actualCategory = findCategory(actualSubreddit);
     
-    // Find category match
-    for (const [category, subreddits] of Object.entries(subredditCategories)) {
-      if (subreddits.includes(predictedSubreddit) && 
-          subreddits.includes(actualSubreddit)) {
-        score += SCORES.CATEGORY_MATCH;
-        break;
+    if (predictedCategory && predictedCategory === actualCategory) {
+      breakdown.subreddit = SCORES.CATEGORY_MATCH;
+      score += breakdown.subreddit;
+    } else {
+      // Check for partial subreddit match
+      const subRedditSimilarity = similarity(predictedSubreddit, actualSubreddit);
+      if (subRedditSimilarity >= PARTIAL_MATCH_THRESHOLD) {
+        breakdown.subreddit = SCORES.PARTIAL_SUBREDDIT;
+        score += breakdown.subreddit;
       }
-    }
-    
-    // Check for partial subreddit match
-    const subRedditSimilarity = similarity(predictedSubreddit, actualSubreddit);
-    if (subRedditSimilarity >= PARTIAL_MATCH_THRESHOLD) {
-      score += SCORES.PARTIAL_SUBREDDIT;
     }
   }
   
@@ -93,36 +130,51 @@ export function calculateScore(prediction: Prediction, actualPost: any): number 
   
   if (predictedTitle === actualTitle) {
     // Exact title match
-    score += SCORES.EXACT_TITLE;
+    breakdown.title = SCORES.EXACT_TITLE;
+    score += breakdown.title;
   } else {
-    // Check for partial title match
+    // Check for partial title match using similarity
     const titleSimilarity = similarity(predictedTitle, actualTitle);
     if (titleSimilarity >= PARTIAL_MATCH_THRESHOLD) {
-      score += SCORES.PARTIAL_TITLE;
+      // Partial title match score based on similarity strength
+      breakdown.title = Math.round(SCORES.PARTIAL_TITLE * titleSimilarity);
+      score += breakdown.title;
     }
   }
   
-  // Apply streak bonus (if implemented)
-  // In a real app, this would come from user state
-  const streakBonus = 1.0; // 10% bonus for each consecutive day
+  // Apply streak bonus
+  if (streakBonus > 1) {
+    breakdown.streakBonus = Math.round(score * (streakBonus - 1));
+    score += breakdown.streakBonus;
+  }
   
-  return Math.round(score * streakBonus);
+  // Ensure minimum score of 0
+  score = Math.max(score, 0);
+  
+  // Complete the breakdown with total
+  breakdown.total = score;
+  
+  return score;
 }
 
 /**
  * Get prediction accuracy breakdown
  * @param prediction User's prediction
  * @param actualPost Actual top post data
+ * @param streakBonus Multiplier for streak (optional)
  * @returns Detailed breakdown of score components
  */
-export function getScoreBreakdown(prediction: Prediction, actualPost: any) {
+export function getScoreBreakdown(prediction: Prediction, actualPost: RedditPost, streakBonus: number = 1): ScoreBreakdown {
+  // Calculate the score to get the breakdown
+  calculateScore(prediction, actualPost, streakBonus);
+  
   // This would be implemented to show users how their score was calculated
   // For now, return a mock breakdown
   return {
-    participation: SCORES.PARTICIPATION,
-    subreddit: 100, // Mock value
-    title: 80, // Mock value
-    streakBonus: 10, // Mock value
-    total: 200 // Mock total
+    participation: 10,
+    subreddit: 100,
+    title: 80,
+    streakBonus: 10,
+    total: 200
   };
 }

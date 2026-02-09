@@ -98,3 +98,23 @@ export const formatDuration = (ms: number): string => {
     return `${seconds}s`;
   }
 };
+
+/**
+ * Get the current week number
+ * @param date Date to check (defaults to now)
+ * @returns Week number
+ */
+export const getWeekNumber = (date: Date = new Date()): number => {
+  // Copy the date to avoid modifying the original
+  const tempDate = new Date(date);
+  tempDate.setHours(0, 0, 0, 0);
+  // Set to nearest Thursday: current date + 4 - current day number
+  // Make Sunday's day number 7
+  tempDate.setDate(tempDate.getDate() + 4 - (tempDate.getDay() || 7));
+  // Get first day of year
+  const yearStart = new Date(tempDate.getFullYear(), 0, 1);
+  // Calculate full weeks to nearest Thursday
+  const weekNumber = Math.ceil((((tempDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  
+  return weekNumber;
+};
