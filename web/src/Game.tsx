@@ -15,6 +15,7 @@ const Game: React.FC = () => {
   const [user, setUser] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [subredditFilter, setSubredditFilter] = useState('all');
 
   useEffect(() => {
     const loadRedditData = async () => {
@@ -23,8 +24,7 @@ const Game: React.FC = () => {
         setTopPost(data);
         setError(null);
       } catch (err) {
-        setError("Failed to load today's top post. Using mock data for demonstration.");
-        console.error('Failed to fetch Reddit data:', err);
+        setError("Using demo data. Live Reddit data unavailable.");
       } finally {
         setLoading(false);
       }
@@ -36,7 +36,6 @@ const Game: React.FC = () => {
       const isAfter = isAfterDeadline();
       setIsPredictionOpen(!isAfter);
       setDeadlineInfo(getTimeUntilDeadline());
-      return isAfter;
     };
 
     checkDeadline();
@@ -46,15 +45,15 @@ const Game: React.FC = () => {
 
   const handleSubmitPrediction = (predictionData: { user: string; subreddit: string; title: string; reason: string }) => {
     if (!user.trim()) {
-      setError('Please enter a username before submitting a prediction.');
+      setError('Please enter a username before submitting.');
       return;
     }
     if (!topPost) {
-      setError('Cannot submit prediction: No top post data available.');
+      setError('Cannot submit: No top post data available.');
       return;
     }
 
-    const score = topPost ? calculateScore(predictionData as Prediction, topPost) : 0;
+    const score = calculateScore(predictionData as Prediction, topPost);
     
     const newPrediction: Prediction = {
       ...predictionData,
@@ -65,57 +64,154 @@ const Game: React.FC = () => {
     };
 
     setPredictions([newPrediction, ...predictions]);
-    setSuccessMessage(score > 0 ? `Success! Your prediction earned ${score} points.` : 'Submitted! Check back later to see your score.');
+    setSuccessMessage(score > 0 ? `🎉 You earned ${score} points!` : '✅ Submitted! Check back for results.');
     setError(null);
   };
 
-  const dismissSuccess = () => setSuccessMessage(null);
+  const dismissMessages = () => {
+    setSuccessMessage(null);
+    setError(null);
+  };
+
+  const containerStyle: React.CSSProperties = {
+    maxWidth: '600px',
+    margin: '0 auto',
+    padding: '20px',
+  };
+
+  const headerStyle: React.CSSProperties = {
+    textAlign: 'center',
+    marginBottom: '20px',
+  };
+
+  const titleStyle: React.CSSProperties = {
+    color: '#ff4500',
+    fontSize: '2em',
+    marginBottom: '5px',
+    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+  };
+
+  const subtitleStyle: React.CSSProperties = {
+    color: '#aaa',
+    fontSize: '1.1em',
+  };
+
+  const alertStyle = (type: 'error' | 'success'): React.CSSProperties => ({
+    padding: '15px',
+    borderRadius: '8px',
+    marginBottom: '15px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: type === 'error' ? '#ffebee' : '#e8f5e9',
+    color: type === 'error' ? '#c62828' : '#2e7d32',
+    border: `1px solid ${type === 'error' ? '#ef9a9a' : '#a5d6a7'}`,
+  });
+
+  const timerBoxStyle: React.CSSProperties = {
+    padding: '20px',
+    borderRadius: '12px',
+    marginBottom: '20px',
+    textAlign: 'center',
+    backgroundColor: isPredictionOpen ? '#1b5e20' : '#b71c1c',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+  };
+
+  const timerDigitStyle: React.CSSProperties = {
+    fontSize: '1.8em',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+  };
+
+  const postPreviewStyle: React.CSSProperties = {
+    marginTop: '20px',
+    padding: '15px',
+    borderRadius: '12px',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.1)',
+  };
+
+  const linkStyle: React.CSSProperties = {
+    display: 'inline-block',
+    marginTop: '10px',
+    padding: '10px 20px',
+    backgroundColor: '#ff4500',
+    color: 'white',
+    textDecoration: 'none',
+    borderRadius: '6px',
+    fontWeight: '500',
+  };
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
-      <h1 style={{ color: '#ff4500', marginBottom: '5px' }}>Reddit Oracle</h1>
-      <p style={{ fontSize: '1.1em', marginBottom: '20px' }}>Predict today's #1 post on r/popular</p>
-      
+    <div style={containerStyle}>
+      <div style={headerStyle}>
+        <h1 style={titleStyle}>🔮 Reddit Oracle 🔮</h1>
+        <p style={subtitleStyle}>Predict today's #1 post on r/popular</p>
+      </div>
+
       {error && (
-        <div style={{ padding: '15px', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '4px', marginBottom: '20px' }}>
-          {error}
+        <div style={alertStyle('error')}>
+          <span>⚠️ {error}</span>
+          <button onClick={dismissMessages} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em' }}>×</button>
         </div>
       )}
-      
+
       {successMessage && (
-        <div style={{ padding: '15px', backgroundColor: '#d4edda', color: '#155724', borderRadius: '4px', marginBottom: '20px' }}>
-          {successMessage}
-          <button onClick={dismissSuccess} style={{ marginLeft: '10px', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
+        <div style={alertStyle('success')}>
+          <span>{successMessage}</span>
+          <button onClick={dismissMessages} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em' }}>×</button>
         </div>
       )}
 
       <StreakCounter userId={user || 'anonymous'} />
 
-      {isPredictionOpen ? (
-        <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e9f7ef', borderRadius: '8px' }}>
-          <strong>Predictions close in:</strong> {deadlineInfo.hours}h {deadlineInfo.minutes}m {deadlineInfo.seconds}s
-        </div>
-      ) : (
-        <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8d7da', borderRadius: '8px' }}>
-          <strong>Predictions closed!</strong> Results will be announced tomorrow.
-        </div>
-      )}
+      <div style={timerBoxStyle}>
+        {isPredictionOpen ? (
+          <>
+            <p style={{ marginBottom: '10px', fontSize: '0.9em', opacity: 0.9 }}>⏰ Predictions close in:</p>
+            <div style={timerDigitStyle}>
+              {String(deadlineInfo.hours).padStart(2, '0')}:
+              {String(deadlineInfo.minutes).padStart(2, '0')}:
+              {String(deadlineInfo.seconds).padStart(2, '0')}
+            </div>
+          </>
+        ) : (
+          <>
+            <p style={{ marginBottom: '10px', fontSize: '1.1em' }}>🔒 Predictions CLOSED</p>
+            <p style={{ fontSize: '0.9em', opacity: 0.9 }}>Come back tomorrow!</p>
+          </>
+        )}
+      </div>
 
       <PredictionForm onSubmit={handleSubmitPrediction} onUserChange={setUser} disabled={!isPredictionOpen} />
+      
       <Leaderboard predictions={predictions} topPost={topPost} />
 
-      {loading && <div style={{ marginTop: '30px', padding: '15px', border: '1px solid #ccc', borderRadius: '8px' }}><p>Loading...</p></div>}
-      
-      {!loading && topPost && (
-        <div style={{ marginTop: '30px', padding: '15px', border: '1px solid #ccc', borderRadius: '8px' }}>
-          <h3>Today's Top Post:</h3>
-          <p><strong>Subreddit:</strong> r/{topPost.subreddit}</p>
-          <p><strong>Title:</strong> {topPost.title}</p>
-          <p><strong>Score:</strong> {topPost.score.toLocaleString()}</p>
-          <p><strong>Comments:</strong> {topPost.num_comments.toLocaleString()}</p>
-          <a href={topPost.url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '10px', padding: '8px 16px', backgroundColor: '#007bff', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>View Post</a>
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '30px' }}>
+          <p>🔄 Loading Reddit data...</p>
         </div>
       )}
+
+      {!loading && topPost && (
+        <div style={postPreviewStyle}>
+          <h3 style={{ marginBottom: '15px', color: '#ff4500' }}>📊 Current Top Post</h3>
+          <p><strong>r/{topPost.subreddit}</strong></p>
+          <p style={{ marginTop: '8px', lineHeight: 1.5 }}>{topPost.title}</p>
+          <p style={{ marginTop: '10px', color: '#aaa', fontSize: '0.9em' }}>
+            ⬆️ {topPost.score.toLocaleString()} | 💬 {topPost.num_comments.toLocaleString()}
+          </p>
+          <a href={topPost.url} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+            View on Reddit
+          </a>
+        </div>
+      )}
+
+      <div style={{ marginTop: '30px', textAlign: 'center', padding: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        <p style={{ fontSize: '0.8em', color: '#666' }}>
+          🏆 Reddit Daily Games 2026 Hackathon Entry
+        </p>
+      </div>
     </div>
   );
 };
